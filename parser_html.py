@@ -1,3 +1,5 @@
+# Good practice to format imports in next way: build-in libs, third-party, project files
+
 import time
 import requests
 import pyodbc
@@ -7,6 +9,9 @@ from bs4 import BeautifulSoup
 import threading
 import math
 from UserData import Candidate, LinkScraper
+
+# It's better to save configurations in separate file (consider creating of config.py or config.json)
+
 
 # TIME_PERIOD defines whole amount of cv that shows at rabota.ua
 TIME_PERIOD = '7'
@@ -78,6 +83,8 @@ def get_pages_html(cv_page_links, soap_arr):
 # 'https://rabota.ua/employer/find/cv_list?keywords=Маркетолог&period=7&sort=date&pg=1'
 t = time.time()
 
+# Consider using True instead of 1
+
 while 1:
     print("Current page: " + str(CURRENT_PAGE) + "  in general page")
     request_string = URL + '/employer/find/cv_list?keywords=' + KEY_WORD + '&period=' + TIME_PERIOD + '&sort=date&pg=' + str(CURRENT_PAGE)
@@ -86,22 +93,26 @@ while 1:
 
 
     # Devide cv_hrefs list into to halfs to mak 2 threads
+    # Consider code reuse divider = math.floor(len(cv_hrefs)/4)
     cv_hrefs_1th = cv_hrefs[:math.floor(len(cv_hrefs) / 4)]
     cv_hrefs_2d = cv_hrefs[math.floor(len(cv_hrefs) / 4): math.floor(len(cv_hrefs) / 2)]
     cv_hrefs_3d = cv_hrefs[math.floor(len(cv_hrefs) / 2): 3 * math.floor(len(cv_hrefs) / 4)]
     cv_hrefs_4th = cv_hrefs[3 * math.floor(len(cv_hrefs) / 4):]
-
+    # Consider using tuple cv_hrefs instead of cv_hrefs_(number)
+    
+    # Connecting to database in infinite loop, really????
     cnxn = pyodbc.connect(
         'DRIVER={ODBC Driver 13 for SQL Server};Server=tcp:morbaxsql.database.windows.net,1433;Database=MorbaxDB;Uid=morbax@morbaxsql;Pwd={!NeedMoreBaks1111};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;')
     cursor = cnxn.cursor()
     # Exit program if there aren't any cv's more
+    # Really??? Check is the is something to parse after sciling? Consider if not cv_hrefs:
     if len(cv_hrefs) < 1:
         print("ALL CVs were taken")
         exit(0)
-
+    
     cv_page_links = list(map(lambda cv_id: URL + cv_id, cv_hrefs))
     # print(str(CURRENT_PAGE) + "-th page links were taken")
-
+    # Probably you should concat and slice insted of slice concat and concat
     cv_page_links1 = list(map(lambda cv_id: URL + cv_id, cv_hrefs_1th))
     cv_page_links2 = list(map(lambda cv_id: URL + cv_id, cv_hrefs_2d))
     cv_page_links3 = list(map(lambda cv_id: URL + cv_id, cv_hrefs_3d))
@@ -109,6 +120,7 @@ while 1:
 
     scrapper = LinkScraper(USER_EMAIL, USER_PASSWORD)
     # Define 2 threads
+    # Consider using multithread map, https://stackoverflow.com/a/3332884/5678999
     t1 = threading.Thread(target=scrapper.scrap_links, args=(cv_page_links1, scrapper.soup_arr1))
     t2 = threading.Thread(target=scrapper.scrap_links, args=(cv_page_links2, scrapper.soup_arr2))
     t3 = threading.Thread(target=scrapper.scrap_links, args=(cv_page_links3, scrapper.soup_arr3))
@@ -126,7 +138,7 @@ while 1:
 
     soup_arr = scrapper.get_links_list()
     link_iterator = 0
-
+    # Consider creating file from code below
     for html_cv_page in soup_arr:
         print(cv_page_links[link_iterator])
         cv = Candidate()
